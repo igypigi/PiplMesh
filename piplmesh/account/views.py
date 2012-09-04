@@ -319,6 +319,16 @@ class PasswordChangeView(edit_views.FormView):
     def get_form(self, form_class):
         return form_class(self.request.user, **self.get_form_kwargs())
 
+class PasswordResetView(edit_views.FormView):
+    template_name = 'user/password_reset.html'
+    form_class = forms.PasswordResetForm
+    success_url = urlresolvers.reverse_lazy('password_reset')
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Password reset e-mail has been sent to your e-mail address."))
+        messages.success(self.request, _("username: " + models.User.objects.get(email=form.cleaned_data['email']).username))
+        return super(PasswordResetView, self).form_valid(form)
+
 class EmailConfirmationSendToken(edit_views.FormView):
     template_name = 'user/email_confirmation_send_token.html'
     form_class = forms.EmailConfirmationSendTokenForm

@@ -133,6 +133,17 @@ class PasswordChangeForm(UserCurrentPasswordForm, UserPasswordForm):
     Class with form for changing password.
     """
 
+class PasswordResetForm(forms.Form):
+    """
+    Class with form for changing password.
+    """
+
+    email = forms.EmailField(label=_("E-mail"))
+    def clean_email(self):
+
+        #raise forms.ValidationError(_("The confirmation token is invalid or has expired. Please retry."), code='confirmation_token_incorrect')
+        return
+
 class EmailConfirmationSendTokenForm(forms.Form):
     """
     Form for sending an e-mail address confirmation token.
