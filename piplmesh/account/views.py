@@ -348,9 +348,33 @@ class PasswordResetView(edit_views.FormView):
     success_url = urlresolvers.reverse_lazy('password_reset')
 
     def form_valid(self, form):
+        users = self.form_class.get_users(form)
+        for user in users:
+            password_reset_token = crypto.get_random_string(30)
+            context = {
+                'PASSWORD_RESET_TOKEN_VALIDITY': models.PASSWORD_RESET_TOKEN_VALIDITY,
+                'EMAIL_SUBJECT_PREFIX': settings.EMAIL_SUBJECT_PREFIX,
+                'SITE_NAME': settings.SITE_NAME,
+                'password_reset_token': password_reset_token,
+                'email_address': user.email,
+                'request': self.request,
+                'user': user,
+                }
+            subject = loader.render_to_string('user/password_reset_subject.txt', context)
+            # Email subject *must not* contain newlines
+            subject = ''.join(subject.splitlines())
+            email = loader.render_to_string('user/password_reset.txt', context)
+            user.password_reset_token = models.PasswordResetToken(value=password_reset_token)
+            user.save()
+            user.email_user(subject, email)
+            messages.success(self.request, _("username: " + user.username))
         messages.success(self.request, _("Password reset e-mail has been sent to your e-mail address."))
-        messages.success(self.request, _("username: " + models.User.objects.get(email=form.cleaned_data['email']).username))
         return super(PasswordResetView, self).form_valid(form)
+
+class PasswordResetTokenView(edit_views.FormView):
+    template_name = 'user/password_reset.html'
+    form_class = forms.PasswordResetForm
+    success_url = urlresolvers.reverse_lazy('home')
 
 class EmailConfirmationSendToken(edit_views.FormView):
     template_name = 'user/email_confirmation_send_token.html'

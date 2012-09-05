@@ -20,6 +20,7 @@ from .. import panels
 LOWER_DATE_LIMIT = 366 * 120
 USERNAME_REGEX = r'[\w.@+-]+'
 CONFIRMATION_TOKEN_VALIDITY = 5 # days
+PASSWORD_RESET_TOKEN_VALIDITY = 1 # day
 
 def upper_birthdate_limit():
     return datetime.datetime.today()
@@ -47,6 +48,17 @@ class EmailConfirmationToken(mongoengine.EmbeddedDocument):
 class TwitterAccessToken(mongoengine.EmbeddedDocument):
     key = mongoengine.StringField(max_length=150)
     secret = mongoengine.StringField(max_length=150)
+
+class PasswordResetToken(mongoengine.EmbeddedDocument):
+    value = mongoengine.StringField(max_length=30, required=True)
+    created_time = mongoengine.DateTimeField(default=lambda: timezone.now(), required=True)
+
+    def check_token(self, password_reset_token):
+        if password_reset_token != self.value:
+            return False
+        elif (timezone.now() - self.created_time).days > PASSWORD_RESET_TOKEN_VALIDITY:
+            return False
+        return True
 
 class User(auth.User):
     username = mongoengine.StringField(
@@ -83,6 +95,8 @@ class User(auth.User):
 
     email_confirmed = mongoengine.BooleanField(default=False)
     email_confirmation_token = mongoengine.EmbeddedDocumentField(EmailConfirmationToken)
+
+    password_reset_token = mongoengine.EmbeddedDocumentField(PasswordResetToken)
 
     @models.permalink
     def get_absolute_url(self):

@@ -139,10 +139,24 @@ class PasswordResetForm(forms.Form):
     """
 
     email = forms.EmailField(label=_("E-mail"))
-    def clean_email(self):
 
-        #raise forms.ValidationError(_("The confirmation token is invalid or has expired. Please retry."), code='confirmation_token_incorrect')
-        return
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        self.users = models.User.objects.filter(email=email, email_confirmed=True)
+        if len(self.users) < 1:
+            raise forms.ValidationError(_("User with this email does not exist in our database."),
+                code='user_not_exist')
+
+        for user in self.users:
+            if not user.has_usable_password():
+                break
+        else:
+            return email
+        raise forms.ValidationError(_("User with this email can not reset password."), code='unusable_password')
+
+
+    def get_users(self):
+        return self.users
 
 class EmailConfirmationSendTokenForm(forms.Form):
     """
