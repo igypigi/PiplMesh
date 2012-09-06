@@ -135,7 +135,7 @@ class PasswordChangeForm(UserCurrentPasswordForm, UserPasswordForm):
 
 class PasswordResetForm(forms.Form):
     """
-    Class with form for changing password.
+    Class with form for resetting password.
     """
 
     email = forms.EmailField(label=_("E-mail"))
@@ -157,6 +157,23 @@ class PasswordResetForm(forms.Form):
 
     def get_users(self):
         return self.users
+
+class PasswordResetTokenForm(UserPasswordForm):
+    """
+    Class with form for resetting password.
+    """
+
+class PasswordResetChangeForm(UserPasswordForm): ####
+    """
+    Class with form for resetting password.
+    """
+    password_reset_token = forms.CharField(
+        label=_("Password reset token"),
+        min_length=30,
+        max_length=30,
+        required=True,
+        help_text=_("Please enter the password reset token you received to your e-mail address."),
+    )
 
 class EmailConfirmationSendTokenForm(forms.Form):
     """

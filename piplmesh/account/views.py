@@ -348,6 +348,11 @@ class PasswordResetView(edit_views.FormView):
     success_url = urlresolvers.reverse_lazy('password_reset')
 
     def form_valid(self, form):
+        messages.error(self.request, "error.....")
+        messages.warning(self.request, "warning.....")
+        messages.success(self.request, "success.....")
+        messages.info(self.request, "info.....")
+        messages.debug(self.request, "debug.....")
         users = self.form_class.get_users(form)
         for user in users:
             password_reset_token = crypto.get_random_string(30)
@@ -367,14 +372,31 @@ class PasswordResetView(edit_views.FormView):
             user.password_reset_token = models.PasswordResetToken(value=password_reset_token)
             user.save()
             user.email_user(subject, email)
-            messages.success(self.request, _("username: " + user.username))
+            messages.success(self.request, _("username: ") + user.username) ########
         messages.success(self.request, _("Password reset e-mail has been sent to your e-mail address."))
+        users = models.User.objects.all()
+        for user in users:
+            messages.success(self.request, user.password_reset_token)
         return super(PasswordResetView, self).form_valid(form)
 
 class PasswordResetTokenView(edit_views.FormView):
     template_name = 'user/password_reset.html'
-    form_class = forms.PasswordResetForm
-    success_url = urlresolvers.reverse_lazy('home')
+    form_class = forms.PasswordResetTokenForm
+    success_url = urlresolvers.reverse_lazy('login')
+
+    def dispatch(self, request, *args, **kwargs):
+        self.users = models.User.objects.filter(password_reset_token=kwargs.get('password_reset_token'))
+        for user in self.users:
+            messages.success(request, user.username)
+        messages.error(request,
+            _("Password reset token is invalid or has expired. Please enter your e-mail again."))
+        ###################return shortcuts.redirect('password_reset')
+        return super(PasswordResetTokenView, self).dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        users = models.User.objects.filter(password_reset_token=self.kwargs.get('confirmation_token'))
+        form.cleaned_data["password1"]
+        messages.success(self.request, _("Your password has been successfully changed."))
 
 class EmailConfirmationSendToken(edit_views.FormView):
     template_name = 'user/email_confirmation_send_token.html'
