@@ -348,11 +348,6 @@ class PasswordResetView(edit_views.FormView):
     success_url = urlresolvers.reverse_lazy('password_reset')
 
     def form_valid(self, form):
-        messages.error(self.request, "error.....")
-        messages.warning(self.request, "warning.....")
-        messages.success(self.request, "success.....")
-        messages.info(self.request, "info.....")
-        messages.debug(self.request, "debug.....")
         users = self.form_class.get_users(form)
         for user in users:
             password_reset_token = crypto.get_random_string(30)
@@ -372,11 +367,8 @@ class PasswordResetView(edit_views.FormView):
             user.password_reset_token = models.PasswordResetToken(value=password_reset_token)
             user.save()
             user.email_user(subject, email)
-            messages.success(self.request, _("username: ") + user.username) ########
         messages.success(self.request, _("Password reset e-mail has been sent to your e-mail address."))
         users = models.User.objects.all()
-        for user in users:
-            messages.success(self.request, user.password_reset_token)
         return super(PasswordResetView, self).form_valid(form)
 
 class PasswordResetTokenView(edit_views.FormView):
@@ -397,7 +389,7 @@ class PasswordResetTokenView(edit_views.FormView):
         for user in self.users:
             user.set_password(password)
             user.password_reset_token = None
-            messages.success(self.request, user.username)
+            user.save()
         messages.success(self.request, _("Your password has been successfully changed."))
         return super(PasswordResetTokenView, self).form_valid(form)
 
