@@ -127,9 +127,9 @@ PUSH_SERVER_URL = '/passthrough/'
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '02dl2nfiacp)87-1g2$=l@b(q5+qs^)qo=byzdvgx+35q)gw&^'
 
-EMAIL_HOST = 'smtp.t-2.net'
+EMAIL_HOST = 'localhost'
 EMAIL_SUBJECT_PREFIX = '[PiplMesh] '
-DEFAULT_FROM_EMAIL = 'webmaster@t-2.net'
+DEFAULT_FROM_EMAIL = 'webmaster@localhost'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
