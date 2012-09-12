@@ -532,14 +532,47 @@ button.browserid-signin:hover {
 
 /* ------------------- MESSAGES ------------------- */
 .messages {
-    border: solid 1px #DEDEDE; 
-    background: #00CC00;
+    border: solid 1px #DEDEDE;
     color: #006600;
-    padding: 4px;
+    padding-top: 4px;
+    padding-right: 4px;
+    padding-left: 4px;
+    padding-bottom: 0;
     text-align: center;
     list-style-type: none;
     margin-left: 20px;
     margin-right: 20px;
+}
+
+.messages li {
+    padding: 4px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.messages .debug {
+    background: #CCCCCC;
+    color: #000000;
+}
+
+.messages .info {
+    background: #e0e0e0;
+    color: #000000;
+}
+
+.messages .success {
+    background: #00CC00;
+    color: #ffffff;
+}
+
+.messages .warning {
+    background: #FF9900;
+    color: #000000;
+}
+
+.messages .error {
+    background: #FF0000;
+    color: #ffffff;
 }
 
 /* --------------------- PROFILE ------------------------ */
