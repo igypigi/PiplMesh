@@ -113,6 +113,117 @@ function makePanelsOrderUpdatable() {
     });
 }
 
+var createHugRun = function (data, hug_link, run_link, hugs_runs) {
+    var self = data;
+
+    hug_link.data('selected', false);
+    hug_link.text(gettext("Hug")).css('font-weight', 'normal');
+    hug_link.unbind();
+    run_link.data('selected', false);
+    run_link.text(gettext("Run")).css('font-weight', 'normal');
+    run_link.unbind();
+
+    $.each(self.hugs, function (index, value) {
+        if (user.username == value.author.username) {
+            hug_link.data('selected', true);
+            hug_link.css('font-weight', 'bold').text(gettext("Unhug"));
+        }
+    });
+
+    $.each(self.runs, function (index, value) {
+        if (user.username == value.author.username) {
+            run_link.data('selected', true);
+            run_link.css('font-weight', 'bold').text(gettext("Unrun"));
+        }
+    });
+
+    function hug_run_link_click(link1, link2, type, text1, text1b, text2) {
+        link1.click(function (event) {
+            var selected = link1.data('selected');
+            var url;
+            if (!selected) {
+                if (type == "hug") {
+                    url = URLS.post + self.id + '/hugs/';
+                }
+                else {
+                    url = URLS.post + self.id + '/runs/';
+                }
+                $.ajax({
+                    'type': 'POST',
+                    'url': url,
+                    'data': '{}',
+                    'contentType': 'application/json',
+                    'dataType': 'json'
+                });
+            }
+            else {
+                var setUrl = function (index, value) {
+                    if (value.author.username === user.username) {
+                        url = value.resource_uri;
+                    }
+                };
+                if (type == "hug") {
+                    $.each(self.hugs, setUrl);
+                }
+                else {
+                    $.each(self.runs, setUrl);
+                }
+                $.ajax({
+                    'type': 'DELETE',
+                    'url': url
+                });
+            }
+        });
+    }
+
+    hug_run_link_click(hug_link, run_link, 'hug', gettext("Hug"), gettext("Unhug"), gettext("Run"));
+    hug_run_link_click(run_link, hug_link, 'run', gettext("Run"), gettext("Unrun"), gettext("Hug"));
+
+
+    var huggers = $('<ul/>');
+    if (self.hugs.length < 1) {
+        huggers.append(
+            $('<li/>').addClass('first').text(gettext("No huggers"))
+        );
+    } else {
+        huggers.append(
+            $('<li/>').addClass('first').text(gettext("Huggers:"))
+        );
+        $.each(self.hugs, function (index, value) {
+            huggers.append($('<li/>').text(value.author.username));
+        });
+    }
+
+    var runners = $('<ul/>');
+    if (self.runs.length < 1) {
+        runners.append(
+            $('<li/>').addClass('first').text(gettext("No runners"))
+        );
+    } else {
+        runners.append(
+            $('<li/>').addClass('first').text(gettext("Runners:"))
+        );
+        $.each(self.runs, function (index, value) {
+            runners.append($('<li/>').text(value.author.username));
+        });
+    }
+
+    var hugs = ngettext("%(hugs)s hug, ", "%(hugs)s hugs, ", self.hugs.length);
+    var hugs = interpolate(hugs, {'hugs': self.hugs.length}, true);
+    var runs = ngettext("%(runs)s run", "%(runs)s runs", self.runs.length);
+    var runs = interpolate(runs, {'runs': self.runs.length}, true);
+
+    hugs_runs.text(hugs + runs);
+    hugs_runs.append($('<div/>').addClass('hugs_runs_display').append(huggers).append(runners));
+    hugs_runs.hover(function (event) {
+            $('.hugs_runs_display', this).show();
+        },
+        function (event) {
+            $('.hugs_runs_display', this).hide();
+        }
+    );
+}
+
 function Post(data) {
     var self = this;
     $.extend(self, data);
@@ -132,76 +243,12 @@ function Post(data) {
             $('<a/>').addClass('edit-post hand').text(gettext("Edit"))
         );
 
-        var hug_link = $('<a/>').addClass('hand').text(gettext("Hug"));
-        var run_link = $('<a/>').addClass('hand').append(gettext("Run"));
-
-        $.each(self.hugs, function (index, value) {
-            if(user.username == value.author.username) {
-                hug_link.data('selected', true);
-                hug_link.css('font-weight', 'bold').text(gettext("Unhug"));
-            }
-        });
-
-        $.each(self.runs, function (index, value) {
-            if(user.username == value.author.username) {
-                run_link.data('selected', true);
-                run_link.css('font-weight', 'bold').text(gettext("Unrun"));
-            }
-        });
-
-        function hug_run_link_click(link1, link2, type, text1, text1b, text2) {
-            link1.click(function (event) {
-                var selected = link1.data('selected');
-                var url;
-                if (!selected) {
-                    if (type == "hug") {
-                        url = URLS.post + self.id + '/hugs/';
-                    }
-                    else {
-                        url = URLS.post + self.id + '/runs/';
-                    }
-                    $.ajax({
-                        'type': 'POST',
-                        'url': url,
-                        'data': '{}',
-                        'contentType': 'application/json',
-                        'dataType': 'json'
-                    });
-                }
-                else {
-                    if (type == "hug") {
-                        $.each(self.hugs, function (index, value) {
-                            if (value.author.username == user.username) {
-                                url = value.resource_uri;
-                            }
-                        });
-                    }
-                    else {
-                        $.each(self.runs, function (index, value) {
-                            if (value.author.username == user.username) {
-                                url = value.resource_uri;
-                            }
-                        });
-                    }
-                    $.ajax({
-                        'type': 'DELETE',
-                        'url': url,
-                        'success': function (data, textStatus, jqXHR) {
-                            link1.data('selected', false);
-                            link1.css('font-weight', 'normal').text(text1);
-                            link2.data('selected', false);
-                            link2.css('font-weight', 'normal').text(text2);
-                        }
-                    });
-                }
-            });
-        }
-
-        hug_run_link_click(hug_link, run_link, 'hug', gettext("Hug"), gettext("Unhug"), gettext("Run"));
-        hug_run_link_click(run_link, hug_link, 'run', gettext("Run"), gettext("Unrun"), gettext("Hug"));
+        var hug_link = $('<a/>').addClass('hand');
+        var run_link = $('<a/>').addClass('hand');
 
         var hug = $('<li/>').addClass('hug').append(hug_link);
         var run = $('<li/>').addClass('run').append(run_link);
+
 
         var post_options = $('<ul />').addClass('options').append(edit_link, delete_link, hug, run);
 
@@ -211,49 +258,11 @@ function Post(data) {
         var date = $('<span/>').addClass('date');
         new Date(self.created_time).updatingNaturaltime(date);
 
-        var huggers = $('<ul/>');
-        if (self.hugs.length < 1) {
-            huggers.append(
-                $('<li/>').addClass('first').text(gettext("No huggers"))
-            );
-        } else {
-            huggers.append(
-                $('<li/>').addClass('first').text(gettext("Huggers:"))
-            );
-            $.each(self.hugs, function (index, value) {
-                huggers.append($('<li/>').text(value.author.username));
-            });
-        }
 
-        var runners = $('<ul/>');
-        if (self.runs.length < 1) {
-            runners.append(
-                $('<li/>').addClass('first').text(gettext("No runners"))
-            );
-        } else {
-            runners.append(
-                $('<li/>').addClass('first').text(gettext("Runners:"))
-            );
-            $.each(self.runs, function (index, value) {
-                runners.append($('<li/>').text(value.author.username));
-            });
-        }
+        var hugs_runs = $('<div/>').addClass('hugs_runs');
 
-        var hugs = ngettext("%(hugs)s hug, ", "%(hugs)s hugs, ", self.hugs.length);
-        var hugs = interpolate(hugs, {'hugs': self.hugs.length}, true);
-        var runs = ngettext("%(runs)s run", "%(runs)s runs", self.runs.length);
-        var runs = interpolate(runs, {'runs': self.runs.length}, true);
-        hugs_runs = $('<div/>').addClass('hugs_runs').text(hugs + runs)
-            .append($('<div/>').addClass('hugs_runs_display').append(huggers).append(runners)
-        );
+        createHugRun(self, hug_link, run_link, hugs_runs);
 
-        hugs_runs.hover(function (event) {
-                $('.hugs_runs_display', this).show();
-            },
-            function (event) {
-                $('.hugs_runs_display', this).hide();
-            }
-        );
 
         var post = $('<li/>').addClass('post').data('post', self).append(post_options).append(
             $('<span/>').append(author_link)
@@ -533,6 +542,18 @@ function showHiddenPosts() {
     $('ul > li.notShown').show('fast').removeClass('notShown');
 }
 
+function updateHugsRuns(data) {
+    $('.post').each(function (index, post) {
+        if ($(post).data('post').id === data.id) {
+            var hug_link = $('.options .hug a', post);
+            var run_link = $('.options .run a', post);
+            var hugs_runs = $('.hugs_runs', post);
+
+            createHugRun(data, hug_link, run_link, hugs_runs);
+        }
+    });
+};
+
 $(document).ready(function () {
     initializePanels();
 
@@ -545,6 +566,14 @@ $(document).ready(function () {
 
     $.updates.registerProcessor('home_channel', 'comment_made', function (data) {
         new Comment(data.comment, Post.getById(data.post_id)).appendToPost();
+    });
+
+    $.updates.registerProcessor('home_channel', 'hug_run_update', function (data) {
+        console.log(data);
+        var post = Post.getById(data.post_id);
+        post.hugs = data.hugs;
+        post.runs = data.runs;
+        updateHugsRuns(post);
     });
 
     $('.panel .header').click(function (event) {

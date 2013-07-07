@@ -164,6 +164,43 @@ def send_update_on_comment(sender, comment, post, request, bundle, **kwargs):
     # want REST request to finish quick
     tasks.send_update.delay(serialized_update)
 
+@dispatch.receiver(signals.hug_run_updated)
+def send_update_on_hug_run(sender, post, request, **kwargs):
+    hugs = []
+    for hug in api_models.Post.objects.get(pk=post.id).hugs:
+        s = {
+            'id': hug.id,
+            'author': {
+                'username': hug.author,
+                },
+            'created_time': hug.created_time,
+            'resource_uri': '/api/v1/post/' + str(post.id) + '/hugs/' + str(hug.id) + '/',
+        }
+        hugs.append(s)
+
+    runs = []
+    for run in api_models.Post.objects.get(pk=post.id).runs:
+        s = {
+            'id': run.id,
+            'author': {
+                'username': run.author,
+                },
+            'created_time': run.created_time,
+            'resource_uri': '/api/v1/post/' + str(post.id) + '/runs/' + str(run.id) + '/',
+        }
+        runs.append(s)
+
+    serialized_update = sender.serialize(request, {
+        'type': 'hug_run_update',
+        'post_id': post.id,
+        'hugs': hugs,
+        'runs': runs,
+    }, 'application/json')
+
+    # We send update asynchronously as it could block and we
+    # want REST request to finish quick
+    tasks.send_update.delay(serialized_update)
+
 @mongoengine_signals.post_save.connect_via(sender=api_models.Notification)
 def send_update_on_new_notification(sender, document, created, **kwargs):
     """

@@ -6,3 +6,5 @@ comment_created = dispatch.Signal(providing_args=('comment', 'post', 'request', 
 
 # Signals dispatched when resources are updated
 post_updated = dispatch.Signal(providing_args=('post', 'request', 'bundle'))
+
+hug_run_updated = dispatch.Signal(providing_args=('post', 'request'))

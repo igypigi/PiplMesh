@@ -48,6 +48,11 @@ class HugRunResourceParent(AuthoredResource):
                 list2.remove(item)
                 return
 
+    def obj_delete(self, request=None, **kwargs):
+        bundle = super(HugRunResourceParent, self).obj_delete(request=request, **kwargs)
+        signals.hug_run_updated.send(sender=self, post=self.instance, request=request or bundle.request)
+        return bundle
+
 class RunResource(HugRunResourceParent):
     class Meta:
         object_class = api_models.Run
@@ -62,7 +67,7 @@ class RunResource(HugRunResourceParent):
 
         self.instance.save()
 
-        # TODO: Should use the signal to push to all clients information about the new run
+        signals.hug_run_updated.send(sender=self, post=self.instance, request=request or bundle.request)
 
         return bundle
 
@@ -80,7 +85,7 @@ class HugResource(HugRunResourceParent):
 
         self.instance.save()
 
-        # TODO: Should use the signal to push to all clients information about the new run
+        signals.hug_run_updated.send(sender=self, post=self.instance, request=request or bundle.request)
 
         return bundle
 
